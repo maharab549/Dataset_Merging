@@ -1,0 +1,7 @@
+datasets>=2.19
+huggingface_hub>=0.24
+pyyaml>=6.0
+tqdm>=4.66
+streamlit>=1.36
+pandas>=2.0
+pyarrow>=14.0

@@ -1,0 +1,53 @@
+# Example config for Weave. Copy this to config.yaml and edit.
+#
+# Each entry under `datasets` is one Hugging Face dataset to pull in.
+# `format` and `columns` are optional — leave them out and Weave will
+# auto-detect. Set them explicitly if a dataset has non-standard column
+# names Weave can't guess, or to override a wrong guess.
+
+datasets:
+  # Alpaca-style, auto-detected (instruction/input/output columns)
+  - repo_id: yahma/alpaca-cleaned
+    split: train
+
+  # ShareGPT-style, auto-detected (conversations column with from/value)
+  - repo_id: teknium/OpenHermes-2.5
+    split: train
+    max_samples: 50000   # cap it — this dataset is large
+    # sample_fraction: 0.5   # alternative to max_samples: keep a random 50%
+
+  # A dataset with unusual column names — map manually
+  - repo_id: some-org/custom-qa-dataset
+    split: train
+    format: prompt_completion
+    columns:
+      prompt_key: question_text
+      completion_key: answer_text
+
+  # Streaming a huge dataset, only taking a sample
+  - repo_id: some-org/giant-corpus
+    split: train
+    streaming: true
+    max_samples: 20000
+    format: text
+
+output:
+  target_format: chatml       # "chatml" (messages list), "text" (flat string), or "preference" (DPO prompt/chosen/rejected)
+  mode: concatenate           # "concatenate" (stack all rows) or "interleave" (mix by ratio)
+  # probabilities: [0.5, 0.3, 0.2]   # only used when mode is "interleave", one weight per dataset above
+
+  # system_prompt: "You are a helpful assistant."   # chatml only — injected into every row missing a system message
+
+  dedupe: true                 # drop duplicate rows after standardizing
+  normalize_dedupe: false      # if true, also catch near-dupes differing only by whitespace/case
+  min_length: 4                 # drop rows shorter than this (characters, summed across turns)
+  max_length: 8192              # drop rows longer than this
+  shuffle: true
+  seed: 42
+
+  train_test_split: 0.02      # holds out 2% as a test split; omit to skip
+
+  save_path: ./merged_dataset  # writes train.jsonl (+ test.jsonl if split)
+  save_formats: [jsonl]         # any of: jsonl, csv, parquet
+  write_dataset_card: true      # also writes README.md summarizing the merge
+  push_to_hub: null             # e.g. "your-username/my-merged-dataset"
